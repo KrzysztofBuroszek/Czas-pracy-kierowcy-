@@ -8,13 +8,13 @@
 <meta name='color-scheme' content='light dark'>
 <title>Czas Pracy C+E</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--text:#1c1c1e;--muted:#6b6b70;--start:#2e7d4f;--stop:#b5483a;--line:#dcdce0;--warn:#a06a10;--warnbg:#fbf1dc}
-@media (prefers-color-scheme: dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#9a9aa0;--start:#3d9a62;--stop:#c95a4a;--line:#38383a;--warn:#e0b04f;--warnbg:#3a2f14}}
+:root{--bg:#f4f5f7;--card:#fff;--text:#1c1c1e;--muted:#6b6b70;--start:#2e7d4f;--stop:#b5483a;--line:#dcdce0;--warn:#a06a10;--warnbg:#fbf1dc;--bad:#9b3a2e;--badbg:#f8e4e0}
+@media (prefers-color-scheme: dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#9a9aa0;--start:#3d9a62;--stop:#c95a4a;--line:#38383a;--warn:#e0b04f;--warnbg:#3a2f14;--bad:#e59a8c;--badbg:#3b2220}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px)}
 h1{font-size:20px;margin:18px 0 10px}
-.tabs{display:flex;gap:8px;margin-bottom:8px}
-.tabs button{flex:1;border:0;border-radius:12px;padding:12px;font-size:16px;font-weight:600;background:var(--card);color:var(--muted)}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button{flex:1;border:0;border-radius:12px;padding:12px 4px;font-size:15px;font-weight:600;background:var(--card);color:var(--muted)}
 .tabs button.on{background:var(--text);color:var(--bg)}
 .status{background:var(--card);border-radius:16px;padding:18px;margin:12px 0}
 .status .big{font-size:26px;font-weight:700}
@@ -24,7 +24,19 @@ button.main:disabled{opacity:.35}
 #btnStart{background:var(--start)}
 #btnStop{background:var(--stop)}
 .note{color:var(--muted);font-size:13px;margin:18px 0}
+.box{background:var(--card);border-radius:16px;padding:14px 16px;margin:12px 0}
+.box h3{margin:0 0 8px;font-size:16px}
+.imp{border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px}
+.imp b{display:block;font-size:15px;margin-bottom:2px}
+.imp small{display:block;opacity:.85;margin-top:2px}
+.imp.exceed{background:var(--badbg);color:var(--bad)}
+.imp.check{background:var(--warnbg);color:var(--warn)}
+.kv{padding:8px 0}
+.kv .k{color:var(--muted);font-size:13px}
+.kv .v{font-weight:600;font-size:16px;margin-top:2px}
+.note2{color:var(--muted);font-size:12px;margin-top:6px}
 .add{display:block;width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:600;background:var(--start);color:#fff;margin:10px 0}
+.mini{border:0;border-radius:10px;padding:10px 14px;font-size:15px;font-weight:600;background:var(--line);color:var(--text);margin-top:8px}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
 .week{background:var(--card);border-radius:16px;margin:10px 0;overflow:hidden}
 .weekhead{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:none;color:var(--text);padding:16px;text-align:left;font-size:16px}
@@ -34,7 +46,10 @@ button.main:disabled{opacity:.35}
 .hrow{display:block;width:100%;border:0;border-top:1px solid var(--line);background:none;color:var(--text);padding:14px 16px;text-align:left;font-size:16px}
 .l1{font-weight:600}
 .l2{color:var(--muted);font-size:14px;margin-top:2px}
+.l3{color:var(--muted);font-size:13px;margin-top:2px}
 .warnline{color:var(--warn);background:var(--warnbg);border-radius:8px;padding:6px 8px;font-size:13px;margin-top:6px}
+.badline{color:var(--bad);background:var(--badbg);border-radius:8px;padding:6px 8px;font-size:13px;margin-top:6px}
+.okline{color:var(--start);font-size:14px;margin-top:6px;font-weight:600}
 .backup{background:var(--card);border-radius:16px;padding:16px;margin:14px 0}
 .backup h3{margin:0 0 4px;font-size:16px}
 .backup p{margin:0 0 12px;color:var(--muted);font-size:13px}
@@ -42,17 +57,18 @@ button.main:disabled{opacity:.35}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .overlay.show{display:flex}
 #ed{z-index:10}
+#cr{z-index:15}
 #ov{z-index:20}
 .dialog{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:340px}
 .dialog h2{margin:0 0 8px;font-size:20px}
 .dialog p{color:var(--muted);margin:0 0 18px}
 .btns{display:flex;gap:10px;margin-top:16px}
-.btns button{flex:1;border:0;border-radius:14px;padding:16px;font-size:17px;font-weight:600}
+.btns button{flex:1;border:0;border-radius:14px;padding:16px 6px;font-size:16px;font-weight:600}
 .gray{background:var(--line);color:var(--text)}
 .green{background:var(--start);color:#fff}
 .delbtn{display:block;width:100%;border:0;background:none;color:var(--stop);font-size:16px;font-weight:600;padding:14px;margin-top:6px}
 label{display:block;font-size:14px;color:var(--muted);margin:12px 0 4px}
-input[type=datetime-local]{width:100%;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);min-height:46px}
+input[type=datetime-local],select{width:100%;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);min-height:46px}
 .msg{font-size:14px;margin:12px 0 0;border-radius:10px}
 .msg.err{color:var(--stop)}
 .msg.warn{color:var(--warn);background:var(--warnbg);padding:8px 10px}
@@ -60,13 +76,15 @@ input[type=datetime-local]{width:100%;font-size:16px;padding:12px;border-radius:
 </head>
 <body>
 <h1>Czas Pracy C+E</h1>
-<div class='tabs'><button id='tHome' class='on'>Start</button><button id='tHist'>Historia</button></div>
+<div class='tabs'><button id='tHome' class='on'>Start</button><button id='tHist'>Historia</button><button id='tComp'>Rekompensaty</button></div>
 
 <div id='vHome'>
   <div class='status'><div class='big' id='stText'></div><div class='sub' id='stSub'></div></div>
   <button class='main' id='btnStart'>Rozpocznij pracę</button>
   <button class='main' id='btnStop'>Zakończ pracę</button>
-  <div class='note'>Narzędzie pomocnicze. Nie zastępuje tachografu ani formalnej ewidencji. Dane zapisują się tylko na tym urządzeniu.</div>
+  <div id='impBox'></div>
+  <div class='box' id='infoBox'></div>
+  <div class='note'>Narzędzie pomocnicze. Wyniki to obliczony odstęp na podstawie zapisanych okresów pracy, a nie potwierdzona zgodność z przepisami. Nie zastępuje tachografu ani formalnej ewidencji. Dane zapisują się tylko na tym urządzeniu.</div>
 </div>
 
 <div id='vHist' style='display:none'>
@@ -79,7 +97,12 @@ input[type=datetime-local]{width:100%;font-size:16px;padding:12px;border-radius:
     <input type='file' id='fileImp' accept='.json,application/json' style='display:none'>
     <div class='msg' id='bkMsg'></div>
   </div>
-  <div class='note'>Tygodnie liczone od poniedziałku do niedzieli. Rodzaje odpoczynków i terminy pojawią się w kolejnym kroku.</div>
+  <div class='note'>Tygodnie liczone od poniedziałku do niedzieli. Przy wpisie widać odstęp po nim i jego rodzaj.</div>
+</div>
+
+<div id='vComp' style='display:none'>
+  <div id='compList'></div>
+  <div class='note'>Rekompensata ma być odebrana jednym blokiem, dołączonym do odpoczynku trwającego co najmniej 9 h, najpóźniej do końca trzeciego tygodnia po tygodniu skrócenia. Tygodniem skrócenia jest tydzień (pon.–niedz.), w którym odpoczynek się zaczął. Aplikacja podpowiada odebranie na podstawie zapisanych odstępów, a Ty je potwierdzasz.</div>
 </div>
 
 <div class='overlay' id='ed'>
@@ -89,9 +112,21 @@ input[type=datetime-local]{width:100%;font-size:16px;padding:12px;border-radius:
     <input type='datetime-local' id='edStart'>
     <label for='edEnd'>Koniec pracy</label>
     <input type='datetime-local' id='edEnd'>
+    <div id='edCrewBox' style='display:none'>
+      <label for='edCrew'>Dniówka dłuższa niż 15 h: załoga</label>
+      <select id='edCrew'><option value=''>Wybierz…</option><option value='single'>Jeden kierowca</option><option value='double'>Załoga dwuosobowa</option></select>
+    </div>
     <div class='msg' id='edMsg'></div>
     <div class='btns'><button class='gray' id='edCancel'>Anuluj</button><button class='green' id='edSave'>Zapisz</button></div>
     <button class='delbtn' id='edDel'>Usuń wpis</button>
+  </div>
+</div>
+
+<div class='overlay' id='cr'>
+  <div class='dialog'>
+    <h2>Załoga dwuosobowa?</h2>
+    <p id='crText'></p>
+    <div class='btns'><button class='gray' id='crLater'>Później</button><button class='gray' id='crNo'>Nie</button><button class='green' id='crYes'>Tak</button></div>
   </div>
 </div>
 
@@ -105,6 +140,7 @@ input[type=datetime-local]{width:100%;font-size:16px;padding:12px;border-radius:
 
 <script>
 const KEY='czasPracyCE_v1';
+const H=3600000,D=24*H;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -112,22 +148,28 @@ function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className
 function load(){
   try{
     const d=JSON.parse(localStorage.getItem(KEY))||{};
-    return{entries:(d.entries||[]).map(e=>e.id?e:{id:uid(),start:e.start,end:e.end}),open:d.open||null};
-  }catch(e){return{entries:[],open:null}}
+    return{entries:(d.entries||[]).map(e=>e.id?e:{id:uid(),start:e.start,end:e.end}),open:d.open||null,comp:d.comp||{}};
+  }catch(e){return{entries:[],open:null,comp:{}}}
 }
 let data=load();
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 if(navigator.storage&&navigator.storage.persist){try{navigator.storage.persist()}catch(e){}}
 
 function fmtDT(iso){return new Date(iso).toLocaleString('pl-PL',{weekday:'short',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}
+function fm(ms){return fmtDT(new Date(ms).toISOString())}
 function fmtTime(iso){return new Date(iso).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})}
 function fmtDay(iso){return new Date(iso).toLocaleDateString('pl-PL',{weekday:'short',day:'numeric',month:'numeric'})}
 function fmtShort(d){return d.toLocaleDateString('pl-PL',{day:'numeric',month:'short'})}
+function fmtDate(d){return d.toLocaleDateString('pl-PL')}
+function plus56(d){const x=new Date(d);x.setDate(x.getDate()+56);return x}
 function sameDay(a,b){return new Date(a).toDateString()===new Date(b).toDateString()}
 function dur(ms){const m=Math.round(ms/60000);return Math.floor(m/60)+' h '+pad(m%60)+' min'}
 function toInput(iso){const d=new Date(iso);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())}
 function fromInput(v){return new Date(v).toISOString()}
 function weekStart(iso){const x=new Date(iso);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+
+const KL={wr:'odpoczynek tygodniowy regularny',ws:'odpoczynek tygodniowy skrócony',dr:'odpoczynek dzienny regularny',ds:'odpoczynek dzienny skrócony',x:'krótszy niż 9 h, do sprawdzenia'};
+function kind(h){return h>=45?'wr':h>=24?'ws':h>=11?'dr':h>=9?'ds':'x'}
 
 function overlaps(s,e,ignoreId){
   const S=new Date(s).getTime(),E=new Date(e).getTime();
@@ -141,30 +183,109 @@ function overlapSet(){
   return set;
 }
 
-let onYes=null;
-function ask(text,fn){$('cText').textContent=text;onYes=fn;$('ov').classList.add('show')}
-$('cNo').onclick=()=>{onYes=null;$('ov').classList.remove('show')};
-$('cYes').onclick=()=>{const f=onYes;onYes=null;$('ov').classList.remove('show');if(f)f()};
+function analyze(){
+  const now=Date.now();
+  const es=data.entries.map(x=>({id:x.id,s:+new Date(x.start),e:+new Date(x.end),crew:x.crew})).sort((a,b)=>a.s-b.s);
+  const F=[],gaps=[];
+  let prevEnd=null,prevId=null;
+  es.forEach(x=>{
+    const len=x.e-x.s,dh=len/H;
+    if(dh>21&&x.crew==='double')F.push({sev:'exceed',date:new Date(x.e),ref:x.id,text:'Dniówka dłuższa niż 21 h (załoga dwuosobowa): '+dur(len)});
+    else if(dh>15&&x.crew==='single')F.push({sev:'exceed',date:new Date(x.e),ref:x.id,text:'Dniówka dłuższa niż 15 h (jeden kierowca): '+dur(len)});
+    else if(dh>15&&!x.crew)F.push({sev:'check',date:new Date(x.e),ref:x.id,act:'crew',text:'Dniówka dłuższa niż 15 h: '+dur(len)+'. Uzupełnij, czy była załoga dwuosobowa'});
+    if(prevEnd!==null&&x.s>=prevEnd)gaps.push({afterId:prevId,s:prevEnd,e:x.s,h:(x.s-prevEnd)/H});
+    if(prevEnd===null||x.e>prevEnd){prevEnd=x.e;prevId=x.id}
+  });
+  if(data.open&&prevEnd!==null){
+    const os=+new Date(data.open);
+    if(os>=prevEnd)gaps.push({afterId:prevId,s:prevEnd,e:os,h:(os-prevEnd)/H});
+  }
+  let lastW=null,cnt=0,hasW=false;
+  const weekly=[];
+  gaps.forEach(g=>{
+    g.k=kind(g.h);
+    if(g.k==='wr'||g.k==='ws'){
+      if(lastW!==null&&g.s>lastW+6*D)F.push({sev:'exceed',date:new Date(lastW+6*D),ref:g.afterId,text:'Odpoczynek tygodniowy rozpoczęty po terminie (najpóźniej '+fm(lastW+6*D)+')'});
+      weekly.push(g);lastW=g.e;cnt=0;hasW=true;
+    }else if(g.k==='ds'){
+      cnt++;
+      if(cnt>3)F.push({sev:'exceed',date:new Date(g.e),ref:g.afterId,text:'Czwarty skrócony odpoczynek dzienny między odpoczynkami tygodniowymi ('+dur(g.h*H)+')'});
+    }else if(g.k==='x'){
+      F.push({sev:'check',date:new Date(g.e),ref:g.afterId,text:'Odstęp krótszy niż 9 h ('+dur(g.h*H)+'): do sprawdzenia, możliwy odpoczynek dzielony'});
+    }
+  });
+  const lastEnd=prevEnd;
+  const deadline=lastW!==null?lastW+6*D:null;
+  if(deadline!==null&&((lastEnd!==null&&lastEnd>deadline)||(data.open&&now>deadline))){
+    F.push({sev:'exceed',date:new Date(deadline),ref:null,text:'Termin rozpoczęcia odpoczynku tygodniowego przekroczony (był '+fm(deadline)+')'});
+  }
+  const comps=[];
+  weekly.forEach(g=>{
+    if(g.k==='ws'){
+      const wd=new Date(g.s);wd.setHours(0,0,0,0);
+      wd.setDate(wd.getDate()-((wd.getDay()+6)%7)+28);
+      comps.push({key:new Date(g.s).toISOString(),from:g.s,end:g.e,h:g.h,c:45-g.h,deadline:wd.getTime(),status:'open',cand:null});
+    }
+  });
+  const used=new Set();
+  comps.forEach(c=>{
+    if(data.comp&&data.comp[c.key]){c.status='done';return}
+    const cand=gaps.find(g=>!used.has(g)&&g.s>=c.end&&g.e<=c.deadline&&((g.h>=45+c.c)||(g.h<24&&g.h>=9+c.c)));
+    if(cand){used.add(cand);c.cand=cand;c.status='maybe'}
+    else if(now>c.deadline){
+      c.status='late';
+      F.push({sev:'exceed',date:new Date(c.deadline),ref:null,text:'Nieodebrana rekompensata '+dur(c.c*H)+' za skrócony odpoczynek tygodniowy z '+fmtDay(new Date(c.from).toISOString())});
+    }
+  });
+  return{gaps:gaps,findings:F,cnt:cnt,hasW:hasW,lastW:lastW,deadline:deadline,lastEnd:lastEnd,comps:comps,restingWeekly:!data.open&&lastEnd!==null&&(now-lastEnd)>=24*H};
+}
+
+function kv(k,v){const r=el('div','kv');r.appendChild(el('div','k',k));r.appendChild(el('div','v',v));return r}
 
 function renderHome(){
-  const w=!!data.open;
+  const A=analyze(),now=Date.now(),w=!!data.open;
   $('stText').textContent=w?'Praca':'Poza pracą';
   let sub='Brak zapisanych okresów';
-  if(w){sub='Od '+fmtDT(data.open)}
-  else if(data.entries.length){
-    const last=data.entries.reduce((a,b)=>new Date(b.end)>new Date(a.end)?b:a);
-    sub='Ostatnie zakończenie: '+fmtDT(last.end);
-  }
+  if(w)sub='Od '+fmtDT(data.open)+' (trwa '+dur(now-new Date(data.open))+')';
+  else if(A.lastEnd!==null)sub='Odpoczynek trwa '+dur(now-A.lastEnd)+' (od '+fm(A.lastEnd)+')';
   $('stSub').textContent=sub;
   $('btnStart').disabled=w;
   $('btnStop').disabled=!w;
+  const ib=$('impBox');ib.textContent='';
+  const items=A.findings.filter(f=>plus56(f.date)>now).sort((a,b)=>b.date-a.date);
+  if(items.length){
+    const b=el('div','box');
+    b.appendChild(el('h3',null,'Ważne'));
+    items.forEach(f=>{
+      const d=el('div','imp '+f.sev);
+      d.appendChild(el('b',null,f.text));
+      d.appendChild(el('small',null,'Zdarzenie: '+fmtDate(f.date)+' · wygasa: '+fmtDate(plus56(f.date))));
+      if(f.act==='crew'){d.appendChild(el('small',null,'Dotknij, aby odpowiedzieć'));d.style.cursor='pointer';d.onclick=()=>askCrew(f.ref)}
+      b.appendChild(d);
+    });
+    ib.appendChild(b);
+  }
+  const inf=$('infoBox');inf.textContent='';
+  inf.appendChild(kv('Skrócone odpoczynki dzienne',A.cnt>3?'przekroczono ('+A.cnt+' z 3)':A.cnt+' z 3 wykorzystane — pozostało '+(3-A.cnt)));
+  let wk;
+  if(A.restingWeekly)wk='Trwa odpoczynek ('+dur(now-A.lastEnd)+'), termin policzę po jego zakończeniu';
+  else if(A.deadline!==null)wk='Najpóźniej do '+fm(A.deadline)+(A.deadline>now?' (za '+dur(A.deadline-now)+')':' (po terminie)');
+  else wk='Termin policzę po pierwszym zapisanym odpoczynku tygodniowym';
+  inf.appendChild(kv('Następny odpoczynek tygodniowy',wk));
+  const pend=A.comps.filter(c=>c.status==='open'||c.status==='maybe');
+  inf.appendChild(kv('Rekompensaty',pend.length?pend.length+' do odebrania, najbliższy termin '+fmtDate(new Date(Math.min.apply(null,pend.map(c=>c.deadline))-1)):'Brak do odebrania'));
+  inf.appendChild(el('div','note2',A.hasW?'Licznik liczony od ostatniego odpoczynku tygodniowego w zapisanych danych.':'Brak zapisanego odpoczynku tygodniowego: licznik liczony od początku zapisanych danych.'));
 }
 
 let openWeeks=null;
 function renderHist(){
   const box=$('histList');
   box.textContent='';
+  const A=analyze();
   const ov=overlapSet();
+  const gm={},fmap={};
+  A.gaps.forEach(g=>{gm[g.afterId]=g});
+  A.findings.forEach(f=>{if(f.ref){(fmap[f.ref]=fmap[f.ref]||[]).push(f)}});
   const weeks=new Map();
   data.entries.slice().sort((a,b)=>new Date(b.start)-new Date(a.start)).forEach(e=>{
     const k=weekStart(e.start).getTime();
@@ -200,7 +321,10 @@ function renderHist(){
       list.forEach(e=>{
         const r=el('button','hrow');
         r.appendChild(el('div','l1',fmtDay(e.start)+'  '+fmtTime(e.start)+' → '+(sameDay(e.start,e.end)?'':fmtDay(e.end)+' ')+fmtTime(e.end)));
-        r.appendChild(el('div','l2',dur(new Date(e.end)-new Date(e.start))));
+        r.appendChild(el('div','l2',dur(new Date(e.end)-new Date(e.start))+(e.crew==='double'?' · załoga dwuosobowa':'')));
+        const g=gm[e.id];
+        if(g)r.appendChild(el('div','l3','Potem: '+dur(g.e-g.s)+' · '+KL[g.k]));
+        (fmap[e.id]||[]).forEach(f=>r.appendChild(el('div',f.sev==='exceed'?'badline':'warnline','⚠ '+f.text)));
         if(ov.has(e.id))r.appendChild(el('div','warnline','⚠ Nakłada się z innym wpisem'));
         r.onclick=()=>openEditor(e.id);
         card.appendChild(r);
@@ -209,16 +333,75 @@ function renderHist(){
     box.appendChild(card);
   });
 }
-function renderAll(){renderHome();renderHist()}
+
+function renderComp(){
+  const A=analyze();
+  const box=$('compList');
+  box.textContent='';
+  if(!A.comps.length){box.appendChild(el('div','empty','Brak skróconych odpoczynków tygodniowych w zapisanych danych.'));return}
+  A.comps.slice().sort((a,b)=>b.from-a.from).forEach(c=>{
+    const card=el('div','week');
+    const body=el('div','hrow');
+    body.style.borderTop='0';
+    body.appendChild(el('div','l1','Skrócony odpoczynek tygodniowy: '+dur(c.h*H)));
+    body.appendChild(el('div','l2','Od '+fm(c.from)));
+    body.appendChild(el('div','l2','Do odebrania: '+dur(c.c*H)+' · najpóźniej do '+fmtDate(new Date(c.deadline-1))+' (koniec niedzieli)'));
+    if(c.status==='done'){
+      body.appendChild(el('div','okline','Odebrana (potwierdzone)'));
+      const b=el('button','mini','Cofnij potwierdzenie');
+      b.onclick=()=>{delete data.comp[c.key];save();renderAll()};
+      body.appendChild(b);
+    }else if(c.status==='maybe'){
+      body.appendChild(el('div','warnline','Prawdopodobnie odebrana: odstęp '+dur(c.cand.h*H)+' (od '+fm(c.cand.s)+')'));
+      const b=el('button','mini','Potwierdź odebranie');
+      b.onclick=()=>{data.comp[c.key]=true;save();renderAll()};
+      body.appendChild(b);
+    }else if(c.status==='late'){
+      body.appendChild(el('div','badline','Po terminie: rekompensata nie została odebrana'));
+    }else{
+      body.appendChild(el('div','l3','Do odebrania'));
+    }
+    card.appendChild(body);
+    box.appendChild(card);
+  });
+}
+function renderAll(){renderHome();renderHist();renderComp()}
 
 function show(v){
   $('vHome').style.display=v==='home'?'block':'none';
   $('vHist').style.display=v==='hist'?'block':'none';
+  $('vComp').style.display=v==='comp'?'block':'none';
   $('tHome').classList.toggle('on',v==='home');
   $('tHist').classList.toggle('on',v==='hist');
+  $('tComp').classList.toggle('on',v==='comp');
 }
 $('tHome').onclick=()=>show('home');
 $('tHist').onclick=()=>show('hist');
+$('tComp').onclick=()=>show('comp');
+
+let onYes=null;
+function ask(text,fn){$('cText').textContent=text;onYes=fn;$('ov').classList.add('show')}
+$('cNo').onclick=()=>{onYes=null;$('ov').classList.remove('show')};
+$('cYes').onclick=()=>{const f=onYes;onYes=null;$('ov').classList.remove('show');if(f)f()};
+
+let crId=null;
+function askCrew(id){
+  const e=data.entries.find(x=>x.id===id);
+  if(!e)return;
+  crId=id;
+  $('crText').textContent='Dniówka trwała '+dur(new Date(e.end)-new Date(e.start))+' ('+fmtDay(e.start)+'). Czy to była załoga dwuosobowa?';
+  $('cr').classList.add('show');
+}
+function setCrew(v){
+  const e=data.entries.find(x=>x.id===crId);
+  if(e&&v){e.crew=v;save()}
+  crId=null;
+  $('cr').classList.remove('show');
+  renderAll();
+}
+$('crLater').onclick=()=>setCrew(null);
+$('crNo').onclick=()=>setCrew('single');
+$('crYes').onclick=()=>setCrew('double');
 
 $('btnStart').onclick=()=>ask('Rozpocząć pracę teraz?',()=>{
   if(data.open)return;
@@ -227,14 +410,21 @@ $('btnStart').onclick=()=>ask('Rozpocząć pracę teraz?',()=>{
 });
 $('btnStop').onclick=()=>ask('Zakończyć pracę teraz?',()=>{
   if(!data.open)return;
-  const end=new Date().toISOString();
-  data.entries.push({id:uid(),start:data.open,end:end});
+  const ent={id:uid(),start:data.open,end:new Date().toISOString()};
+  data.entries.push(ent);
   data.open=null;
   save();renderAll();
+  if(new Date(ent.end)-new Date(ent.start)>15*H)askCrew(ent.id);
 });
 
 let edId=null,ovOk=false;
 function msg(t,c){$('edMsg').textContent=t;$('edMsg').className='msg '+c}
+function updateCrewBox(){
+  const sv=$('edStart').value,ev=$('edEnd').value;
+  let longDay=false;
+  if(sv&&ev)longDay=(new Date(ev)-new Date(sv))/H>15;
+  $('edCrewBox').style.display=longDay?'block':'none';
+}
 function openEditor(id){
   edId=id;ovOk=false;
   const e=id?data.entries.find(x=>x.id===id):null;
@@ -242,6 +432,8 @@ function openEditor(id){
   $('edTitle').textContent=e?'Edytuj wpis':'Dodaj wpis ręcznie';
   $('edStart').value=e?toInput(e.start):toInput(now.toISOString());
   $('edEnd').value=e?toInput(e.end):toInput(now.toISOString());
+  $('edCrew').value=e&&e.crew?e.crew:'';
+  updateCrewBox();
   msg('','');
   $('edSave').textContent='Zapisz';
   $('edDel').style.display=e?'block':'none';
@@ -249,7 +441,7 @@ function openEditor(id){
 }
 function closeEd(){$('ed').classList.remove('show');edId=null}
 ['edStart','edEnd'].forEach(id=>{
-  ['input','change'].forEach(ev=>$(id).addEventListener(ev,()=>{ovOk=false;$('edSave').textContent='Zapisz';msg('','')}));
+  ['input','change'].forEach(ev=>$(id).addEventListener(ev,()=>{ovOk=false;$('edSave').textContent='Zapisz';msg('','');updateCrewBox()}));
 });
 $('btnAdd').onclick=()=>openEditor(null);
 $('edCancel').onclick=closeEd;
@@ -258,6 +450,9 @@ $('edSave').onclick=()=>{
   if(!sv||!ev){msg('Uzupełnij początek i koniec.','err');return}
   const s=fromInput(sv),e=fromInput(ev);
   if(new Date(e)<=new Date(s)){msg('Koniec musi być później niż początek.','err');return}
+  const longDay=(new Date(e)-new Date(s))>15*H;
+  const crew=longDay?($('edCrew').value||undefined):undefined;
+  if(longDay&&!crew){msg('Wybierz, czy była załoga dwuosobowa.','err');return}
   const ov=overlaps(s,e,edId);
   if(ov.length&&!ovOk){
     msg('Uwaga: ten okres nakłada się na inny wpis ('+ov.length+'). Możesz go mimo to zapisać.','warn');
@@ -265,8 +460,8 @@ $('edSave').onclick=()=>{
     $('edSave').textContent='Zapisz mimo to';
     return;
   }
-  if(edId){const x=data.entries.find(y=>y.id===edId);x.start=s;x.end=e}
-  else data.entries.push({id:uid(),start:s,end:e});
+  if(edId){const x=data.entries.find(y=>y.id===edId);x.start=s;x.end=e;x.crew=crew}
+  else data.entries.push({id:uid(),start:s,end:e,crew:crew});
   save();closeEd();renderAll();
 };
 $('edDel').onclick=()=>ask('Usunąć ten wpis?',()=>{
@@ -277,7 +472,7 @@ $('edDel').onclick=()=>ask('Usunąć ten wpis?',()=>{
 function bk(t,c){$('bkMsg').textContent=t;$('bkMsg').className='msg '+c}
 function stamp(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())}
 $('btnExp').onclick=async()=>{
-  const payload={app:'czas-pracy-ce',version:1,exported:new Date().toISOString(),entries:data.entries,open:data.open};
+  const payload={app:'czas-pracy-ce',version:2,exported:new Date().toISOString(),entries:data.entries,open:data.open,comp:data.comp};
   const name='czas-pracy-'+stamp()+'.json';
   const file=new File([JSON.stringify(payload,null,1)],name,{type:'application/json'});
   try{
@@ -299,26 +494,38 @@ $('btnImp').onclick=()=>{$('fileImp').value='';$('fileImp').click()};
 $('fileImp').onchange=async()=>{
   const f=$('fileImp').files[0];
   if(!f)return;
-  let inc;
+  let inc,incComp={};
   try{
     const d=JSON.parse(await f.text());
     if(!d||d.app!=='czas-pracy-ce'||!Array.isArray(d.entries))throw new Error('x');
     inc=d.entries.filter(e=>e&&e.start&&e.end&&!isNaN(new Date(e.start))&&!isNaN(new Date(e.end))&&new Date(e.end)>new Date(e.start));
+    if(d.comp&&typeof d.comp==='object')incComp=d.comp;
   }catch(e){bk('To nie jest poprawny plik kopii Czas Pracy.','err');return}
-  const have=new Set(data.entries.map(x=>new Date(x.start).getTime()+'|'+new Date(x.end).getTime()));
+  const kk=e=>new Date(e.start).getTime()+'|'+new Date(e.end).getTime();
+  const have=new Map(data.entries.map(x=>[kk(x),x]));
   let added=0,dup=0;
   inc.forEach(e=>{
-    const key=new Date(e.start).getTime()+'|'+new Date(e.end).getTime();
-    if(have.has(key)){dup++;return}
-    have.add(key);
-    data.entries.push({id:uid(),start:new Date(e.start).toISOString(),end:new Date(e.end).toISOString()});
+    const crew=(e.crew==='single'||e.crew==='double')?e.crew:undefined;
+    const key=kk(e);
+    if(have.has(key)){
+      dup++;
+      const ex=have.get(key);
+      if(!ex.crew&&crew)ex.crew=crew;
+      return;
+    }
+    const ne={id:uid(),start:new Date(e.start).toISOString(),end:new Date(e.end).toISOString(),crew:crew};
+    have.set(key,ne);
+    data.entries.push(ne);
     added++;
   });
+  Object.keys(incComp).forEach(k=>{if(incComp[k]===true&&!data.comp[k])data.comp[k]=true});
   save();renderAll();
   const nov=overlapSet().size;
   bk('Dodano wpisów: '+added+', pominięto duplikatów: '+dup+(nov?'. Uwaga: wpisy z ⚠ nakładają się, sprawdź je w historii.':'.'),nov?'warn':'');
 };
 
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderAll()});
+setInterval(renderHome,60000);
 renderAll();
 </script>
 </body>
