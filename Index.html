@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Czas Pracy">
+<meta name="color-scheme" content="light dark">
+<title>Czas Pracy C+E</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--text:#1c1c1e;--muted:#6b6b70;--start:#2e7d4f;--stop:#b5483a;--line:#dcdce0;}
+@media (prefers-color-scheme: dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--muted:#9a9aa0;--start:#3d9a62;--stop:#c95a4a;--line:#38383a;}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+h1{font-size:20px;margin:18px 0 4px}
+.status{background:var(--card);border-radius:16px;padding:18px;margin:12px 0}
+.status .big{font-size:26px;font-weight:700}
+.status .sub{color:var(--muted);margin-top:6px;font-size:15px}
+button.main{display:block;width:100%;border:0;border-radius:20px;color:#fff;font-size:24px;font-weight:700;padding:34px 10px;margin:14px 0}
+button.main:disabled{opacity:.35}
+#btnStart{background:var(--start)}
+#btnStop{background:var(--stop)}
+.note{color:var(--muted);font-size:13px;margin:18px 0}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.dialog{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:340px}
+.dialog h2{margin:0 0 8px;font-size:20px}
+.dialog p{color:var(--muted);margin:0 0 18px}
+.row{display:flex;gap:10px}
+.row button{flex:1;border:0;border-radius:14px;padding:16px;font-size:17px;font-weight:600}
+#cNo{background:var(--line);color:var(--text)}
+#cYes{background:var(--start);color:#fff}
+</style>
+</head>
+<body>
+<h1>Czas Pracy C+E</h1>
+<div class="status">
+  <div class="big" id="stText">…</div>
+  <div class="sub" id="stSub"></div>
+</div>
+<button class="main" id="btnStart">Rozpocznij pracę</button>
+<button class="main" id="btnStop">Zakończ pracę</button>
+<div class="note">Narzędzie pomocnicze. Nie zastępuje tachografu ani formalnej ewidencji. Dane zapisują się tylko na tym urządzeniu.</div>
+
+<div class="overlay" id="ov">
+  <div class="dialog">
+    <h2>Czy na pewno?</h2>
+    <p id="cText"></p>
+    <div class="row"><button id="cNo">Anuluj</button><button id="cYes">Tak</button></div>
+  </div>
+</div>
+
+<script>
+const KEY='czasPracyCE_v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{entries:[],open:null}}catch(e){return{entries:[],open:null}}}
+function save(d){localStorage.setItem(KEY,JSON.stringify(d))}
+let data=load();
+let pending=null;
+const fmt=iso=>new Date(iso).toLocaleString('pl-PL',{weekday:'short',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'});
+function render(){
+  const working=!!data.open;
+  document.getElementById('stText').textContent=working?'Praca':'Poza pracą';
+  document.getElementById('stSub').textContent=working?('Od '+fmt(data.open)):(data.entries.length?('Ostatnie zakończenie: '+fmt(data.entries[data.entries.length-1].end)):'Brak zapisanych okresów');
+  document.getElementById('btnStart').disabled=working;
+  document.getElementById('btnStop').disabled=!working;
+}
+function ask(kind){
+  pending=kind;
+  document.getElementById('cText').textContent=kind==='start'?'Rozpocząć pracę teraz?':'Zakończyć pracę teraz?';
+  document.getElementById('ov').classList.add('show');
+}
+document.getElementById('btnStart').onclick=()=>ask('start');
+document.getElementById('btnStop').onclick=()=>ask('stop');
+document.getElementById('cNo').onclick=()=>{pending=null;document.getElementById('ov').classList.remove('show')};
+document.getElementById('cYes').onclick=()=>{
+  const now=new Date().toISOString();
+  if(pending==='start'&&!data.open){data.open=now}
+  else if(pending==='stop'&&data.open){data.entries.push({start:data.open,end:now});data.open=null}
+  save(data);pending=null;
+  document.getElementById('ov').classList.remove('show');
+  render();
+};
+render();
+</script>
+</body>
+</html>
