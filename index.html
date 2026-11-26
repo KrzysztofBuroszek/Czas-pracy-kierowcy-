@@ -35,6 +35,10 @@ button.main:disabled{opacity:.35}
 .l1{font-weight:600}
 .l2{color:var(--muted);font-size:14px;margin-top:2px}
 .warnline{color:var(--warn);background:var(--warnbg);border-radius:8px;padding:6px 8px;font-size:13px;margin-top:6px}
+.backup{background:var(--card);border-radius:16px;padding:16px;margin:14px 0}
+.backup h3{margin:0 0 4px;font-size:16px}
+.backup p{margin:0 0 12px;color:var(--muted);font-size:13px}
+.backup .btns{margin-top:0}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .overlay.show{display:flex}
 #ed{z-index:10}
@@ -68,6 +72,13 @@ input[type=datetime-local]{width:100%;font-size:16px;padding:12px;border-radius:
 <div id='vHist' style='display:none'>
   <button class='add' id='btnAdd'>+ Dodaj wpis ręcznie</button>
   <div id='histList'></div>
+  <div class='backup'>
+    <h3>Kopia zapasowa</h3>
+    <p>Eksport zapisuje plik, który wybierzesz do iCloud Drive. Import łączy wpisy z pliku z tymi w telefonie.</p>
+    <div class='btns'><button class='gray' id='btnExp'>Eksport</button><button class='gray' id='btnImp'>Import</button></div>
+    <input type='file' id='fileImp' accept='.json,application/json' style='display:none'>
+    <div class='msg' id='bkMsg'></div>
+  </div>
   <div class='note'>Tygodnie liczone od poniedziałku do niedzieli. Rodzaje odpoczynków i terminy pojawią się w kolejnym kroku.</div>
 </div>
 
@@ -262,6 +273,51 @@ $('edDel').onclick=()=>ask('Usunąć ten wpis?',()=>{
   data.entries=data.entries.filter(x=>x.id!==edId);
   save();closeEd();renderAll();
 });
+
+function bk(t,c){$('bkMsg').textContent=t;$('bkMsg').className='msg '+c}
+function stamp(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())}
+$('btnExp').onclick=async()=>{
+  const payload={app:'czas-pracy-ce',version:1,exported:new Date().toISOString(),entries:data.entries,open:data.open};
+  const name='czas-pracy-'+stamp()+'.json';
+  const file=new File([JSON.stringify(payload,null,1)],name,{type:'application/json'});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      bk('Eksport gotowy: '+name,'');
+      return;
+    }
+  }catch(e){
+    if(e&&e.name==='AbortError'){bk('Eksport anulowany.','');return}
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(file);
+  a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  bk('Pobrano plik: '+name,'');
+};
+$('btnImp').onclick=()=>{$('fileImp').value='';$('fileImp').click()};
+$('fileImp').onchange=async()=>{
+  const f=$('fileImp').files[0];
+  if(!f)return;
+  let inc;
+  try{
+    const d=JSON.parse(await f.text());
+    if(!d||d.app!=='czas-pracy-ce'||!Array.isArray(d.entries))throw new Error('x');
+    inc=d.entries.filter(e=>e&&e.start&&e.end&&!isNaN(new Date(e.start))&&!isNaN(new Date(e.end))&&new Date(e.end)>new Date(e.start));
+  }catch(e){bk('To nie jest poprawny plik kopii Czas Pracy.','err');return}
+  const have=new Set(data.entries.map(x=>new Date(x.start).getTime()+'|'+new Date(x.end).getTime()));
+  let added=0,dup=0;
+  inc.forEach(e=>{
+    const key=new Date(e.start).getTime()+'|'+new Date(e.end).getTime();
+    if(have.has(key)){dup++;return}
+    have.add(key);
+    data.entries.push({id:uid(),start:new Date(e.start).toISOString(),end:new Date(e.end).toISOString()});
+    added++;
+  });
+  save();renderAll();
+  const nov=overlapSet().size;
+  bk('Dodano wpisów: '+added+', pominięto duplikatów: '+dup+(nov?'. Uwaga: wpisy z ⚠ nakładają się, sprawdź je w historii.':'.'),nov?'warn':'');
+};
 
 renderAll();
 </script>
