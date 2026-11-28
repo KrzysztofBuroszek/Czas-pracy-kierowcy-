@@ -34,16 +34,18 @@ button.main:disabled{opacity:.35}
 .kv{padding:8px 0}
 .kv .k{color:var(--muted);font-size:13px}
 .kv .v{font-weight:600;font-size:16px;margin-top:2px}
+.kv .v2{font-weight:600;font-size:15px;margin-top:3px}
 .note2{color:var(--muted);font-size:12px;margin-top:6px}
 .add{display:block;width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:600;background:var(--start);color:#fff;margin:10px 0}
 .mini{border:0;border-radius:10px;padding:10px 14px;font-size:15px;font-weight:600;background:var(--line);color:var(--text);margin-top:8px}
+.gbtn{border:0;border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600;background:var(--line);color:var(--text);margin-top:6px}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
 .week{background:var(--card);border-radius:16px;margin:10px 0;overflow:hidden}
 .weekhead{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:none;color:var(--text);padding:16px;text-align:left;font-size:16px}
 .wt{font-weight:700}
 .ws{color:var(--muted);font-size:13px;margin-top:3px}
 .arrow{color:var(--muted);font-size:18px}
-.hrow{display:block;width:100%;border:0;border-top:1px solid var(--line);background:none;color:var(--text);padding:14px 16px;text-align:left;font-size:16px}
+.hrow{display:block;width:100%;border:0;border-top:1px solid var(--line);background:none;color:var(--text);padding:14px 16px;text-align:left;font-size:16px;cursor:pointer}
 .l1{font-weight:600}
 .l2{color:var(--muted);font-size:14px;margin-top:2px}
 .l3{color:var(--muted);font-size:13px;margin-top:2px}
@@ -97,12 +99,12 @@ input[type=datetime-local],select{width:100%;font-size:16px;padding:12px;border-
     <input type='file' id='fileImp' accept='.json,application/json' style='display:none'>
     <div class='msg' id='bkMsg'></div>
   </div>
-  <div class='note'>Tygodnie liczone od poniedziałku do niedzieli. Przy wpisie widać odstęp po nim i jego rodzaj.</div>
+  <div class='note'>Tygodnie liczone od poniedziałku do niedzieli. Przy wpisie widać odstęp po nim i jego rodzaj. Spośród przerw od 24 h aplikacja sama wybiera odpoczynek tygodniowy (najdłuższy w oknie 6 × 24 h od poprzedniego), pozostałe to dodatkowe wolne. Wybór możesz zmienić przyciskiem przy przerwie.</div>
 </div>
 
 <div id='vComp' style='display:none'>
   <div id='compList'></div>
-  <div class='note'>Rekompensata ma być odebrana jednym blokiem, dołączonym do odpoczynku trwającego co najmniej 9 h, najpóźniej do końca trzeciego tygodnia po tygodniu skrócenia. Tygodniem skrócenia jest tydzień (pon.–niedz.), w którym odpoczynek się zaczął. Aplikacja podpowiada odebranie na podstawie zapisanych odstępów, a Ty je potwierdzasz.</div>
+  <div class='note'>Rekompensata ma być odebrana jednym blokiem, dołączonym do odpoczynku trwającego co najmniej 9 h, najpóźniej do końca trzeciego tygodnia po tygodniu skrócenia. Tygodniem skrócenia jest tydzień (pon.–niedz.), w którym odpoczynek się zaczął. Rekompensata dotyczy tylko odpoczynków uznanych za tygodnie. Aplikacja podpowiada odebranie na podstawie zapisanych odstępów, a Ty je potwierdzasz.</div>
 </div>
 
 <div class='overlay' id='ed'>
@@ -137,7 +139,6 @@ input[type=datetime-local],select{width:100%;font-size:16px;padding:12px;border-
     <div class='btns'><button class='gray' id='cNo'>Anuluj</button><button class='green' id='cYes'>Tak</button></div>
   </div>
 </div>
-
 <script>
 const KEY='czasPracyCE_v1';
 const H=3600000,D=24*H;
@@ -148,8 +149,8 @@ function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className
 function load(){
   try{
     const d=JSON.parse(localStorage.getItem(KEY))||{};
-    return{entries:(d.entries||[]).map(e=>e.id?e:{id:uid(),start:e.start,end:e.end}),open:d.open||null,comp:d.comp||{}};
-  }catch(e){return{entries:[],open:null,comp:{}}}
+    return{entries:(d.entries||[]).map(e=>e.id?e:{id:uid(),start:e.start,end:e.end}),open:d.open||null,comp:d.comp||{},wk:d.wk||{}};
+  }catch(e){return{entries:[],open:null,comp:{},wk:{}}}
 }
 let data=load();
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
@@ -167,9 +168,19 @@ function dur(ms){const m=Math.round(ms/60000);return Math.floor(m/60)+' h '+pad(
 function toInput(iso){const d=new Date(iso);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())}
 function fromInput(v){return new Date(v).toISOString()}
 function weekStart(iso){const x=new Date(iso);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+function wkStart(ms){return weekStart(new Date(ms).toISOString()).getTime()}
+function addDays(ms,n){const x=new Date(ms);x.setDate(x.getDate()+n);return x.getTime()}
+function gkey(g){return new Date(g.s).toISOString()}
+function rankW(g){return (g.h>=45?1000:0)+g.h}
 
-const KL={wr:'odpoczynek tygodniowy regularny',ws:'odpoczynek tygodniowy skrócony',dr:'odpoczynek dzienny regularny',ds:'odpoczynek dzienny skrócony',x:'krótszy niż 9 h, do sprawdzenia'};
-function kind(h){return h>=45?'wr':h>=24?'ws':h>=11?'dr':h>=9?'ds':'x'}
+const KL={wr:'odpoczynek tygodniowy regularny',ws:'odpoczynek tygodniowy skrócony',dr:'odpoczynek dzienny regularny',ds:'odpoczynek dzienny skrócony',dc:'odpoczynek dzienny (załoga dwuosobowa)',dv:'odpoczynek dzienny rozpoczęty za późno',x:'krótszy niż 9 h, do sprawdzenia'};
+function gl(g){
+  if(g.h>=24){
+    if(g.des)return KL[g.k]+' · uznany za tygodniowy'+(g.forced==='W'?' (ręcznie)':'');
+    return 'dodatkowe wolne, nie liczone jako tygodniowy'+(g.forced==='X'?' (ręcznie)':'');
+  }
+  return KL[g.k];
+}
 
 function overlaps(s,e,ignoreId){
   const S=new Date(s).getTime(),E=new Date(e).getTime();
@@ -186,64 +197,128 @@ function overlapSet(){
 function analyze(){
   const now=Date.now();
   const es=data.entries.map(x=>({id:x.id,s:+new Date(x.start),e:+new Date(x.end),crew:x.crew})).sort((a,b)=>a.s-b.s);
-  const F=[],gaps=[];
-  let prevEnd=null,prevId=null;
+  const os=data.open?+new Date(data.open):null;
+  const F=[],L=[],gaps=[];
+  let prev=null;
   es.forEach(x=>{
     const len=x.e-x.s,dh=len/H;
     if(dh>21&&x.crew==='double')F.push({sev:'exceed',date:new Date(x.e),ref:x.id,text:'Dniówka dłuższa niż 21 h (załoga dwuosobowa): '+dur(len)});
     else if(dh>15&&x.crew==='single')F.push({sev:'exceed',date:new Date(x.e),ref:x.id,text:'Dniówka dłuższa niż 15 h (jeden kierowca): '+dur(len)});
     else if(dh>15&&!x.crew)F.push({sev:'check',date:new Date(x.e),ref:x.id,act:'crew',text:'Dniówka dłuższa niż 15 h: '+dur(len)+'. Uzupełnij, czy była załoga dwuosobowa'});
-    if(prevEnd!==null&&x.s>=prevEnd)gaps.push({afterId:prevId,s:prevEnd,e:x.s,h:(x.s-prevEnd)/H});
-    if(prevEnd===null||x.e>prevEnd){prevEnd=x.e;prevId=x.id}
+    if(prev&&x.s>=prev.e)gaps.push({afterId:prev.id,s:prev.e,e:x.s,crew:prev.crew,len:prev.len});
+    if(!prev||x.e>prev.e)prev={e:x.e,id:x.id,crew:x.crew,len:len};
   });
-  if(data.open&&prevEnd!==null){
-    const os=+new Date(data.open);
-    if(os>=prevEnd)gaps.push({afterId:prevId,s:prevEnd,e:os,h:(os-prevEnd)/H});
-  }
-  let lastW=null,cnt=0,hasW=false;
-  const weekly=[];
+  if(os!==null&&prev&&os>=prev.e)gaps.push({afterId:prev.id,s:prev.e,e:os,crew:prev.crew,len:prev.len});
+  let ongoing=null;
+  if(os===null&&prev&&now>prev.e){ongoing={afterId:prev.id,s:prev.e,e:now,crew:prev.crew,len:prev.len,ongoing:true};gaps.push(ongoing)}
+
+  let anchor=es.length?es[0].s:(os!==null?os:null);
   gaps.forEach(g=>{
-    g.k=kind(g.h);
-    if(g.k==='wr'||g.k==='ws'){
-      if(lastW!==null&&g.s>lastW+6*D)F.push({sev:'exceed',date:new Date(lastW+6*D),ref:g.afterId,text:'Odpoczynek tygodniowy rozpoczęty po terminie (najpóźniej '+fm(lastW+6*D)+')'});
-      weekly.push(g);lastW=g.e;cnt=0;hasW=true;
-    }else if(g.k==='ds'){
+    g.h=(g.e-g.s)/H;
+    g.anchor=anchor;
+    g.forced=g.h>=24?(data.wk[gkey(g)]||null):null;
+    if(g.h>=24)g.k=g.h>=45?'wr':'ws';
+    else if(g.h>=9){
+      if(g.crew==='double')g.k='dc';
+      else{
+        const p=Math.min(g.e,anchor+D)-g.s;
+        g.portion=p/H;
+        g.k=p>=11*H?'dr':p>=9*H?'ds':'dv';
+      }
+    }else g.k='x';
+    if(!g.ongoing&&g.h>=9)anchor=g.e;
+  });
+  const curAnchor=anchor;
+  const firstStart=es.length?es[0].s:null;
+
+  const cand=gaps.filter(g=>g.h>=24&&g.forced!=='X');
+  let lastW=null,lastDes=null,rest=cand.slice();
+  while(rest.length){
+    const limit=(lastW===null?firstStart:lastW)+6*D;
+    const elig=rest.filter(c=>c.s<=limit);
+    let pick;
+    if(elig.length){
+      const forced=elig.filter(c=>c.forced==='W');
+      const pool=forced.length?[forced[0]]:elig;
+      pick=pool.reduce((a,b)=>rankW(b)>rankW(a)?b:a);
+    }else{
+      pick=rest[0];
+      if(lastW!==null)F.push({sev:'exceed',date:new Date(limit),ref:pick.afterId,text:'Odpoczynek tygodniowy rozpoczęty po terminie (najpóźniej '+fm(limit)+')'});
+    }
+    pick.des=true;
+    lastW=pick.e;lastDes=pick;
+    rest=rest.filter(c=>c.s>pick.s);
+  }
+  gaps.forEach(g=>{if(g.h>=24&&!g.des)g.extra=true});
+
+  let cnt=0;
+  gaps.forEach(g=>{
+    if(g.des){cnt=0;return}
+    if(g.ongoing)return;
+    if(g.k==='ds'){
       cnt++;
-      if(cnt>3)F.push({sev:'exceed',date:new Date(g.e),ref:g.afterId,text:'Czwarty skrócony odpoczynek dzienny między odpoczynkami tygodniowymi ('+dur(g.h*H)+')'});
+      if(cnt>3)F.push({sev:'exceed',date:new Date(g.e),ref:g.afterId,text:'Skrócony odpoczynek dzienny nr '+cnt+' między odpoczynkami tygodniowymi (limit: 3), '+dur(g.h*H)});
     }else if(g.k==='x'){
       F.push({sev:'check',date:new Date(g.e),ref:g.afterId,text:'Odstęp krótszy niż 9 h ('+dur(g.h*H)+'): do sprawdzenia, możliwy odpoczynek dzielony'});
+    }else if(g.k==='dv'&&g.len<=15*H){
+      F.push({sev:'exceed',date:new Date(g.e),ref:g.afterId,text:'Odpoczynek dzienny rozpoczęty za późno: w 24 godzinach od końca poprzedniego odpoczynku zmieściło się tylko '+dur(g.portion*H)});
     }
   });
-  const lastEnd=prevEnd;
-  const deadline=lastW!==null?lastW+6*D:null;
-  if(deadline!==null&&((lastEnd!==null&&lastEnd>deadline)||(data.open&&now>deadline))){
+
+  const lastEnd=prev?prev.e:null;
+  const weeklyOngoing=!!(lastDes&&lastDes.ongoing);
+  const deadline=(lastW!==null&&!weeklyOngoing)?lastW+6*D:null;
+  if(deadline!==null&&((lastEnd!==null&&lastEnd>deadline)||(os!==null&&now>deadline))){
     F.push({sev:'exceed',date:new Date(deadline),ref:null,text:'Termin rozpoczęcia odpoczynku tygodniowego przekroczony (był '+fm(deadline)+')'});
   }
+
   const comps=[];
-  weekly.forEach(g=>{
-    if(g.k==='ws'){
-      const wd=new Date(g.s);wd.setHours(0,0,0,0);
-      wd.setDate(wd.getDate()-((wd.getDay()+6)%7)+28);
-      comps.push({key:new Date(g.s).toISOString(),from:g.s,end:g.e,h:g.h,c:45-g.h,deadline:wd.getTime(),status:'open',cand:null});
+  gaps.forEach(g=>{
+    if(g.des&&g.k==='ws'&&!g.ongoing){
+      const wd=new Date(wkStart(g.s));wd.setDate(wd.getDate()+28);
+      comps.push({key:gkey(g),from:g.s,end:g.e,h:g.h,c:45-g.h,deadline:wd.getTime(),status:'open',cand:null});
     }
   });
   const used=new Set();
   comps.forEach(c=>{
     if(data.comp&&data.comp[c.key]){c.status='done';return}
-    const cand=gaps.find(g=>!used.has(g)&&g.s>=c.end&&g.e<=c.deadline&&((g.h>=45+c.c)||(g.h<24&&g.h>=9+c.c)));
-    if(cand){used.add(cand);c.cand=cand;c.status='maybe'}
+    const cd=gaps.find(g=>!g.ongoing&&!used.has(g)&&g.s>=c.end&&g.e<=c.deadline&&(g.des?g.h>=45+c.c:g.h>=9+c.c));
+    if(cd){used.add(cd);c.cand=cd;c.status='maybe'}
     else if(now>c.deadline){
       c.status='late';
       F.push({sev:'exceed',date:new Date(c.deadline),ref:null,text:'Nieodebrana rekompensata '+dur(c.c*H)+' za skrócony odpoczynek tygodniowy z '+fmtDay(new Date(c.from).toISOString())});
     }
   });
-  return{gaps:gaps,findings:F,cnt:cnt,hasW:hasW,lastW:lastW,deadline:deadline,lastEnd:lastEnd,comps:comps,restingWeekly:!data.open&&lastEnd!==null&&(now-lastEnd)>=24*H};
+
+  if(firstStart!==null){
+    let W=wkStart(firstStart);if(W<firstStart)W=addDays(W,7);
+    const dr=gaps.filter(g=>g.des);
+    while(W<=now){
+      const W1=addDays(W,7),W2=addDays(W,14);
+      if(now>=W1){
+        let tot=0,reg=0;
+        dr.forEach(r=>{if(r.s<W2&&r.e>W){tot++;if(r.h>=45)reg++}});
+        if(!(tot>=2&&reg>=1)){
+          const per='Tygodnie '+fmtShort(new Date(W))+' – '+fmtShort(new Date(W2-1));
+          if(now>=W2)F.push({sev:'exceed',date:new Date(W2-1),ref:null,text:per+': brak wymaganych odpoczynków tygodniowych (dwa regularne albo regularny i skrócony). Znalezione: regularne '+reg+', skrócone '+(tot-reg)});
+          else L.push({sev:'check',text:per+': brakuje jeszcze '+(reg===0?'regularnego odpoczynku tygodniowego (45 h)':'drugiego odpoczynku tygodniowego (min. 24 h)')+'. Musi rozpocząć się najpóźniej w niedzielę '+fmtDate(new Date(W2-1))+((ongoing&&ongoing.des&&ongoing.h<45)?'. Trwający odpoczynek będzie regularny po osiągnięciu 45 h ('+fm(ongoing.s+45*3600000)+')':'')});
+        }
+      }
+      W=W1;
+    }
+  }
+  if(os!==null&&curAnchor!==null&&now>curAnchor+15*H){
+    L.push({sev:'exceed',text:'Od końca ostatniego odpoczynku minęło ponad 15 godzin (od '+fm(curAnchor)+'). Odpoczynek dzienny powinien już trwać, chyba że to załoga dwuosobowa'});
+  }
+
+  return{gaps:gaps,findings:F,live:L,cnt:cnt,lastW:lastW,deadline:deadline,lastEnd:lastEnd,comps:comps,anchor:curAnchor,ongoing:ongoing,os:os,weeklyOngoing:weeklyOngoing};
 }
 
 function kv(k,v){const r=el('div','kv');r.appendChild(el('div','k',k));r.appendChild(el('div','v',v));return r}
 
 function renderHome(){
   const A=analyze(),now=Date.now(),w=!!data.open;
+  const tm=ms=>fm(ms)+(ms>now?' (za '+dur(ms-now)+')':' (minął)');
   $('stText').textContent=w?'Praca':'Poza pracą';
   let sub='Brak zapisanych okresów';
   if(w)sub='Od '+fmtDT(data.open)+' (trwa '+dur(now-new Date(data.open))+')';
@@ -251,11 +326,18 @@ function renderHome(){
   $('stSub').textContent=sub;
   $('btnStart').disabled=w;
   $('btnStop').disabled=!w;
+
   const ib=$('impBox');ib.textContent='';
   const items=A.findings.filter(f=>plus56(f.date)>now).sort((a,b)=>b.date-a.date);
-  if(items.length){
+  if(items.length||A.live.length){
     const b=el('div','box');
     b.appendChild(el('h3',null,'Ważne'));
+    A.live.forEach(f=>{
+      const d=el('div','imp '+f.sev);
+      d.appendChild(el('b',null,f.text));
+      d.appendChild(el('small',null,'Stan na teraz'));
+      b.appendChild(d);
+    });
     items.forEach(f=>{
       const d=el('div','imp '+f.sev);
       d.appendChild(el('b',null,f.text));
@@ -265,16 +347,42 @@ function renderHome(){
     });
     ib.appendChild(b);
   }
+
   const inf=$('infoBox');inf.textContent='';
-  inf.appendChild(kv('Skrócone odpoczynki dzienne',A.cnt>3?'przekroczono ('+A.cnt+' z 3)':A.cnt+' z 3 wykorzystane — pozostało '+(3-A.cnt)));
-  let wk;
-  if(A.restingWeekly)wk='Trwa odpoczynek ('+dur(now-A.lastEnd)+'), termin policzę po jego zakończeniu';
-  else if(A.deadline!==null)wk='Najpóźniej do '+fm(A.deadline)+(A.deadline>now?' (za '+dur(A.deadline-now)+')':' (po terminie)');
-  else wk='Termin policzę po pierwszym zapisanym odpoczynku tygodniowym';
-  inf.appendChild(kv('Następny odpoczynek tygodniowy',wk));
+  inf.appendChild(el('h3',null,'Odpoczynek'));
+  const addRow=(k,lines)=>{const r=el('div','kv');r.appendChild(el('div','k',k));lines.forEach(t=>r.appendChild(el('div','v2',t)));inf.appendChild(r)};
+  const left=3-A.cnt;
+  if(w&&A.anchor!==null){
+    const t13=A.anchor+13*H,t15=A.anchor+15*H;
+    const dl=['Regularny 11 h: zacznij najpóźniej '+tm(t13)];
+    dl.push(left>0?'Skrócony 9 h: zacznij najpóźniej '+tm(t15)+' (wykorzystane '+A.cnt+' z 3)':'Skrócony 9 h: niedostępny, wykorzystane 3 z 3. Po '+fm(t13)+' odpoczynek byłby kolejnym skróconym');
+    addRow('Odpoczynek dzienny (24 h liczone od '+fm(A.anchor)+')',dl);
+    if(A.deadline!==null){
+      const wl=['Zacznij najpóźniej '+tm(A.deadline)+': 45 h (albo min. 24 h, wtedy rekompensata)'];
+      if(A.deadline<t15)wl.push('Termin wypada przed końcem doby: ten odpoczynek musi mieć co najmniej 24 h');
+      addRow('Odpoczynek tygodniowy',wl);
+    }else addRow('Odpoczynek tygodniowy',['Termin policzę po pierwszym zapisanym odpoczynku tygodniowym']);
+  }else if(A.ongoing){
+    const g=A.ongoing;
+    if(g.h>=24){
+      addRow('Odpoczynek tygodniowy',['Trwa: '+dur(g.e-g.s),g.h>=45?'Regularny (45 h) osiągnięty':'Regularny (45 h) osiągniesz '+tm(g.s+45*H)]);
+      addRow('Odpoczynek dzienny',['Spełniony: odpoczynek trwa ponad 24 h']);
+    }else{
+      const canReg=A.anchor!==null&&g.s<=A.anchor+13*H;
+      addRow('Odpoczynek dzienny',[
+        left>0?'Skrócony 9 h: do '+tm(g.s+9*H):'Skrócony 9 h: limit 3 wykorzystany',
+        canReg?'Regularny 11 h: do '+tm(g.s+11*H):'Regularny niedostępny: odpoczynek zaczął się po 13 h od końca poprzedniego, liczy się jako skrócony'
+      ]);
+      const wl=[];
+      if(A.deadline!==null)wl.push('Zacznij najpóźniej '+tm(A.deadline));
+      wl.push('Jeśli ma to być tygodniowy: skrócony 24 h do '+tm(g.s+24*H)+', regularny 45 h do '+tm(g.s+45*H));
+      addRow('Odpoczynek tygodniowy',wl);
+    }
+  }else addRow('Odpoczynek',['Brak danych. Rozpocznij pracę, a policzę terminy.']);
+  addRow('Skrócone odpoczynki dzienne',[A.cnt>3?'przekroczono ('+A.cnt+' z 3)':A.cnt+' z 3 wykorzystane, pozostało '+(3-A.cnt)]);
   const pend=A.comps.filter(c=>c.status==='open'||c.status==='maybe');
-  inf.appendChild(kv('Rekompensaty',pend.length?pend.length+' do odebrania, najbliższy termin '+fmtDate(new Date(Math.min.apply(null,pend.map(c=>c.deadline))-1)):'Brak do odebrania'));
-  inf.appendChild(el('div','note2',A.hasW?'Licznik liczony od ostatniego odpoczynku tygodniowego w zapisanych danych.':'Brak zapisanego odpoczynku tygodniowego: licznik liczony od początku zapisanych danych.'));
+  addRow('Rekompensaty',[pend.length?pend.length+' do odebrania, najbliższy termin '+fmtDate(new Date(Math.min.apply(null,pend.map(c=>c.deadline))-1))+', łącznie '+dur(pend.reduce((s,c)=>s+c.c,0)*H):'Brak do odebrania']);
+  inf.appendChild(el('div','note2','Liczone od ostatniego uznanego odpoczynku tygodniowego. Odpoczynek tygodniowy wybiera aplikacja (najdłuższy w oknie 6 × 24 h), w Historii możesz to zmienić.'));
 }
 
 let openWeeks=null;
@@ -314,16 +422,25 @@ function renderHist(){
     if(isOpen){
       if(data.open&&weekStart(data.open).getTime()===k){
         const r=el('div','hrow');
+        r.style.cursor='default';
         r.appendChild(el('div','l1',fmtDay(data.open)+'  '+fmtTime(data.open)+' → trwa'));
         r.appendChild(el('div','l2','Praca w toku'));
         card.appendChild(r);
       }
       list.forEach(e=>{
-        const r=el('button','hrow');
+        const r=el('div','hrow');
         r.appendChild(el('div','l1',fmtDay(e.start)+'  '+fmtTime(e.start)+' → '+(sameDay(e.start,e.end)?'':fmtDay(e.end)+' ')+fmtTime(e.end)));
         r.appendChild(el('div','l2',dur(new Date(e.end)-new Date(e.start))+(e.crew==='double'?' · załoga dwuosobowa':'')));
         const g=gm[e.id];
-        if(g)r.appendChild(el('div','l3','Potem: '+dur(g.e-g.s)+' · '+KL[g.k]));
+        if(g){
+          r.appendChild(el('div','l3','Potem: '+dur(g.e-g.s)+(g.ongoing?' (trwa)':'')+' · '+gl(g)));
+          if(g.h>=24){
+            const gk=gkey(g),forced=data.wk[gk];
+            const b=el('button','gbtn',forced?'Wróć do wyboru automatycznego':(g.des?'Uznaj za dodatkowe wolne':'Uznaj za odpoczynek tygodniowy'));
+            b.onclick=ev=>{ev.stopPropagation();if(forced)delete data.wk[gk];else data.wk[gk]=g.des?'X':'W';save();renderAll()};
+            r.appendChild(b);
+          }
+        }
         (fmap[e.id]||[]).forEach(f=>r.appendChild(el('div',f.sev==='exceed'?'badline':'warnline','⚠ '+f.text)));
         if(ov.has(e.id))r.appendChild(el('div','warnline','⚠ Nakłada się z innym wpisem'));
         r.onclick=()=>openEditor(e.id);
@@ -343,6 +460,7 @@ function renderComp(){
     const card=el('div','week');
     const body=el('div','hrow');
     body.style.borderTop='0';
+    body.style.cursor='default';
     body.appendChild(el('div','l1','Skrócony odpoczynek tygodniowy: '+dur(c.h*H)));
     body.appendChild(el('div','l2','Od '+fm(c.from)));
     body.appendChild(el('div','l2','Do odebrania: '+dur(c.c*H)+' · najpóźniej do '+fmtDate(new Date(c.deadline-1))+' (koniec niedzieli)'));
@@ -472,7 +590,7 @@ $('edDel').onclick=()=>ask('Usunąć ten wpis?',()=>{
 function bk(t,c){$('bkMsg').textContent=t;$('bkMsg').className='msg '+c}
 function stamp(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())}
 $('btnExp').onclick=async()=>{
-  const payload={app:'czas-pracy-ce',version:2,exported:new Date().toISOString(),entries:data.entries,open:data.open,comp:data.comp};
+  const payload={app:'czas-pracy-ce',version:3,exported:new Date().toISOString(),entries:data.entries,open:data.open,comp:data.comp,wk:data.wk};
   const name='czas-pracy-'+stamp()+'.json';
   const file=new File([JSON.stringify(payload,null,1)],name,{type:'application/json'});
   try{
@@ -494,12 +612,13 @@ $('btnImp').onclick=()=>{$('fileImp').value='';$('fileImp').click()};
 $('fileImp').onchange=async()=>{
   const f=$('fileImp').files[0];
   if(!f)return;
-  let inc,incComp={};
+  let inc,incComp={},incWk={};
   try{
     const d=JSON.parse(await f.text());
     if(!d||d.app!=='czas-pracy-ce'||!Array.isArray(d.entries))throw new Error('x');
     inc=d.entries.filter(e=>e&&e.start&&e.end&&!isNaN(new Date(e.start))&&!isNaN(new Date(e.end))&&new Date(e.end)>new Date(e.start));
     if(d.comp&&typeof d.comp==='object')incComp=d.comp;
+    if(d.wk&&typeof d.wk==='object')incWk=d.wk;
   }catch(e){bk('To nie jest poprawny plik kopii Czas Pracy.','err');return}
   const kk=e=>new Date(e.start).getTime()+'|'+new Date(e.end).getTime();
   const have=new Map(data.entries.map(x=>[kk(x),x]));
@@ -519,6 +638,7 @@ $('fileImp').onchange=async()=>{
     added++;
   });
   Object.keys(incComp).forEach(k=>{if(incComp[k]===true&&!data.comp[k])data.comp[k]=true});
+  Object.keys(incWk).forEach(k=>{if((incWk[k]==='W'||incWk[k]==='X')&&!data.wk[k])data.wk[k]=incWk[k]});
   save();renderAll();
   const nov=overlapSet().size;
   bk('Dodano wpisów: '+added+', pominięto duplikatów: '+dup+(nov?'. Uwaga: wpisy z ⚠ nakładają się, sprawdź je w historii.':'.'),nov?'warn':'');
